@@ -990,7 +990,7 @@ var No_crop =
             {
               "Class": 1,
               "system:index": "75"
-            })]);
+            })]).aside(print,'crop');
 
 
 
@@ -1046,7 +1046,7 @@ var VV2 = ee.Image(collectionVV2.median()).clip(AOI);
 var VV3 = ee.Image(collectionVV3.median()).clip(AOI);
 
 
-var RGBVV = VV1.addBands(VV2).addBands(VV3)
+var RGBVV = VV1.addBands(VV2).addBands(VV3).aside(print,'RGBVV')
 
 
 Map.addLayer(RGBVV, {min: -25, max: 5}, 'RGB VV');
@@ -1085,15 +1085,15 @@ var VH2 = ee.Image(collectionVH2.median()).clip(AOI);
 var VH3 = ee.Image(collectionVH3.median()).clip(AOI);
 
 
-var RGBVH = VH1.addBands(VH2).addBands(VH3)
+var RGBVH = VH1.addBands(VH2).addBands(VH3).aside(print,'RGBVH')
 Map.addLayer(RGBVH, {min: -25, max: 5}, 'RGB VH');
 
 
 // ----------------- Segmentation ----------------------------------------
 
-var img_seg = RGBVH.addBands(RGBVV)
+var img_seg = RGBVH.addBands(RGBVV).aside(print,'RGBVH+RGBVV')
 
-var seeds = ee.Algorithms.Image.Segmentation.seedGrid(20);
+var seeds = ee.Algorithms.Image.Segmentation.seedGrid(20).aside(print,'seeds');
 
 var snic_pred = ee.Algorithms.Image.Segmentation.SNIC({
   image: img_seg, 
@@ -1102,7 +1102,7 @@ var snic_pred = ee.Algorithms.Image.Segmentation.SNIC({
   neighborhoodSize: 128,
   size: 10,
   seeds: seeds
-})
+}).aside(print,'SNIC')
 
 
 var clusters_snic_pred = snic_pred.select("clusters")
@@ -1114,26 +1114,27 @@ var vectors_pred = clusters_snic_pred.reduceToVectors({
   scale: 20,
   maxPixels: 1e13,
   geometry: AOI,
-});
+}).aside(print,'reduceToVectors');
 
 
-var empty_pred = ee.Image().byte();
+var empty_pred = ee.Image().byte().aside(print,'byte');
 
 var outline_pred = empty_pred.paint({
   featureCollection: vectors_pred,
   color: 1,
   width: 1
-});
+}).aside(print,'paint');
 Map.addLayer(outline_pred, {palette: 'FF0000'}, 'vec_snic_pred');
 
 
 //---------------- Classification ----------------------------
 
-var FullImage = RGBVH.addBands(RGBVV).toFloat()
+var FullImage = RGBVH.addBands(RGBVV).toFloat().aside(print,'toFloat')
 
 var train_points = No_crop.merge(Crop_fields)
 
-var train_polys = vectors_pred.map(function(feat){
+var train_polys = vectors_pred.aside(print,'vectors_pred')
+  .map(function(feat){
   feat = ee.Feature(feat);
   var point = feat.geometry();
 
@@ -1144,7 +1145,9 @@ var train_polys = vectors_pred.map(function(feat){
     return feat.set('belongsTo',  property).set('Class', cls);
   });
   return mappedPolys;
-}).flatten().filter(ee.Filter.neq('belongsTo', 'FALSE'));
+}).aside(print,'map')
+.flatten().aside(print,'flatten')
+.filter(ee.Filter.neq('belongsTo', 'FALSE'));
 
 
 
@@ -1273,7 +1276,6 @@ var ag_vec = ag_mask.reduceToVectors({
 Map.addLayer(ag_vec,{color:'green'},'Vec_agric')
 
 print('Area em Ha: ',ag_vec.geometry().area(1).divide(100 * 100))
-
 
 
 

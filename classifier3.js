@@ -1114,7 +1114,7 @@ var vectors_pred = clusters_snic_pred.reduceToVectors({
   scale: 20,
   maxPixels: 1e13,
   geometry: AOI,
-}).aside(print,'reduceToVectors');
+}).aside(print,'reduceToVectors'); // FeatureCollection (422 elements, 3 columns)
 
 
 var empty_pred = ee.Image().byte().aside(print,'byte');
@@ -1129,15 +1129,15 @@ Map.addLayer(outline_pred, {palette: 'FF0000'}, 'vec_snic_pred');
 
 //---------------- Classification ----------------------------
 
-var FullImage = RGBVH.addBands(RGBVV).toFloat().aside(print,'toFloat')
+var FullImage = RGBVH.addBands(RGBVV).toFloat().aside(print,'toFloat') //Image (6 bands)
 
-var train_points = No_crop.merge(Crop_fields)
+var train_points = No_crop.merge(Crop_fields).aside(print,'pretrainedpoints') //FeatureCollection (162 elements, 2 columns)
 
-var train_polys = vectors_pred.aside(print,'vectors_pred')
+var train_polys = vectors_pred.aside(print,'vectors_pred') //分割FeatureCollection (422 elements, 3 columns)
   .map(function(feat){
   feat = ee.Feature(feat);
   var point = feat.geometry();
-
+//whether intersects
   var mappedPolys = train_points.map(function(poly){
     var cls = poly.get("Class")
     var intersects = poly.intersects(point, ee.ErrorMargin(1));
@@ -1145,18 +1145,19 @@ var train_polys = vectors_pred.aside(print,'vectors_pred')
     return feat.set('belongsTo',  property).set('Class', cls);
   });
   return mappedPolys;
-}).aside(print,'map')
+}).aside(print,'map') //FeatureCollection (422 elements, 0 columns)
 .flatten().aside(print,'flatten')
-.filter(ee.Filter.neq('belongsTo', 'FALSE'));
+.filter(ee.Filter.neq('belongsTo', 'FALSE')).aside(print,'belongsToFALSEintersects');//FeatureCollection (162 elements, 0 columns)none intersect remained
 
 
 
 
-var train_areas = train_polys
+var train_areas = train_polys //FeatureCollection (162 elements
   .reduceToImage({
     properties: ['Class'],
     reducer: ee.Reducer.first()
-}).rename('Class').toInt();
+}).aside(print,'reduceToImage') //"first", double, EPSG:4326 Image (1 band)
+.rename('Class').toInt().aside(print,'reduceToImagetoInt'); //"Class", signed int32, EPSG:4326 Image (1 band)
 
 
 var vis_RF = {min: 0, max: 1,
@@ -1174,8 +1175,10 @@ var predict_image = vectors_pred
 
 
 
-FullImage = FullImage.addBands(predict_image)
-
+FullImage = FullImage.addBands(predict_image).aside(print,'FullImage')//Image (7 bands)"id", signed int32, EPSG:4326
+//对每个“对象”中的所有像素应用减速器。
+//如果像素是连接的(8-way)，并且在“label”带中具有相同的值，则认为它们属于一个对象。
+//标签带仅用于识别连接性;其余的作为减速器的投入提供。
 
 var FullImage_mean = FullImage.reduceConnectedComponents({
   reducer: ee.Reducer.mean(),
@@ -1203,8 +1206,13 @@ var FullImage_median = FullImage.reduceConnectedComponents({
 });
 
 
-var FullImage_area = ee.Image.pixelArea().addBands(FullImage.select('id')).reduceConnectedComponents(ee.Reducer.sum(), 'id')
-var FullImage_sizes = ee.Image.pixelLonLat().addBands(FullImage.select('id')).reduceConnectedComponents(ee.Reducer.minMax(), 'id')
+var FullImage_area = ee.Image.pixelArea() 
+    //生成一个图像，其中每个像素的值是该像素的面积，以平方米为单位。
+    // 返回的图像有一个单一的波段，称为“区域”。
+    .addBands(FullImage.select('id')).reduceConnectedComponents(ee.Reducer.sum(), 'id')
+var FullImage_sizes = ee.Image.pixelLonLat()
+    //创建一个带有两个带区的图像，分别命名为“经度”和“纬度”，其中包含每个像素处的经度和纬度，单位为度。
+    .addBands(FullImage.select('id')).reduceConnectedComponents(ee.Reducer.minMax(), 'id')
 var FullImage_width = FullImage_sizes.select('longitude_max').subtract(FullImage_sizes.select('longitude_min')).rename('width')
 var FullImage_height = FullImage_sizes.select('latitude_max').subtract(FullImage_sizes.select('latitude_min')).rename('height')
 

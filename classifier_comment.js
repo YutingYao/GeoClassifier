@@ -7,15 +7,18 @@ var globOptions = {
   bands2sr: ['B3', 'B11', 'B12', 'B8', 'B4'],
   bands2sr_TCI: ['TCI_G', 'B11', 'B12', 'B8', 'TCI_R'],
   bandaster: ['B01','B04','B09','B3N', 'B02'],
-  startDate1: '2016-01-01',
-  endDate1: '2016-03-31',
-  startDate2: '2016-04-01',
-  endDate2: '2016-06-31',
-  startDate3: '2016-07-01',
-  endDate3: '2016-09-31',
-  startDate4: '2016-10-01',
-  endDate4: '2016-12-31'
+  startDate0: '2018-01-01',
+  endDate0: '2018-12-31',
+  startDate1: '2018-01-01',
+  endDate1: '2018-03-31',
+  startDate2: '2018-04-01',
+  endDate2: '2018-06-30',
+  startDate3: '2018-07-01',
+  endDate3: '2018-09-30',
+  startDate4: '2018-10-01',
+  endDate4: '2018-12-31'
 };
+
 
 
 
@@ -24,15 +27,15 @@ var globOptions = {
 var landsatFunctions = {
   //温度temperature
   //------------------------------
-  fromDN: function(image) {
-    var bands = ['B10', 'B11', 'B12', 'B13', 'B14'] //thermal infrared
-    var multiplier = ee.Image([0.006822, 0.006780, 0.006590, 0.005693, 0.005225])
-    var k1 = ee.Image([3040.136402, 2482.375199, 1935.060183, 866.468575, 641.326517])
-    var k2 = ee.Image([1735.337945, 1666.398761, 1585.420044, 1350.069147, 1271.221673])
-    var radiance = image.select(bands).subtract(1).multiply(multiplier)
-    var t = k2.divide(k1.divide(radiance).add(1).log())
-    return t.select([0], ['temp']).copyProperties(image, ['system:time_start']);
-  },
+  // fromDN: function(image) {
+  //   var bands = ['B10', 'B11', 'B12', 'B13', 'B14'] //thermal infrared
+  //   var multiplier = ee.Image([0.006822, 0.006780, 0.006590, 0.005693, 0.005225])
+  //   var k1 = ee.Image([3040.136402, 2482.375199, 1935.060183, 866.468575, 641.326517])
+  //   var k2 = ee.Image([1735.337945, 1666.398761, 1585.420044, 1350.069147, 1271.221673])
+  //   var radiance = image.select(bands).subtract(1).multiply(multiplier)
+  //   var t = k2.divide(k1.divide(radiance).add(1).log())
+  //   return t.select([0], ['temp']).copyProperties(image, ['system:time_start']);
+  // },
   
   
   //------------------------------
@@ -99,6 +102,9 @@ var landsatFunctions = {
 
 
 
+
+
+
 var reducer = ee.Reducer.min()
     .combine(ee.Reducer.max(), '', true)
     // .combine(ee.Reducer.stdDev(), '', true)
@@ -121,16 +127,20 @@ var geometry = ee.Geometry.Polygon(
           [122.129183, 31.264105],
           [122.129183, 31.664105]]], null, false);
 
-var randomPointsPreComputed = ee.FeatureCollection.randomPoints({
-    region: geometry,
-    points: 1000
-  });
+// var randomPointsPreComputed = ee.FeatureCollection.randomPoints({
+//     region: geometry,
+//     points: 1000
+//   });
+  
+  
+  
+  
 
 var ASTER = ee.ImageCollection('ASTER/AST_L1T_003')
-  .filterDate(globOptions.startDate, globOptions.endDate)
-  .filterBounds(geometry)
+  .filterDate(globOptions.startDate0, globOptions.endDate0)
+  .filterBounds(geometry);
   
-var ASTER_TEMP = ASTER.map(landsatFunctions.fromDN).aside(print);
+// var ASTER_TEMP = ASTER.map(landsatFunctions.fromDN).aside(print);
 
 var ASTER_1 = ASTER.select(globOptions.bandaster, globOptions.bandSelect)
 .map(landsatFunctions.applyNDWI)
@@ -148,27 +158,342 @@ var ASTER_3 = ASTER.select(globOptions.bandaster, globOptions.bandSelect)
 .aside(print);  //NICE!
 
 
-var S1_GRD = ee.ImageCollection("COPERNICUS/S1_GRD")
-//             .filter(ee.Filter.eq('instrumentMode', 'IW'))
-.filterDate(globOptions.startDate, globOptions.endDate)
+
+
+
+
+
+
+
+
+
+
+
+
+var S1_GRD_VV1 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+// .filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
+.select('VV')
+.filterDate(globOptions.startDate1, globOptions.endDate1)
 .filterBounds(geometry)
 .map(function(image) {
   var edge = image.lt(-30.0);
   var maskedImage = image.mask().and(edge.not());
   return image.updateMask(maskedImage);
 })
-.map(landsatFunctions.applySDWI)
-.reduce(reducer, globOptions.parallelScale)
-.aside(print);
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VV1');
+
+var S1_GRD_VV2 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VV')
+.filterDate(globOptions.startDate2, globOptions.endDate2)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VV2');
+
+var S1_GRD_VV3 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VV')
+.filterDate(globOptions.startDate3, globOptions.endDate3)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VV3');
+
+var S1_GRD_VV4 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VV')
+.filterDate(globOptions.startDate4, globOptions.endDate4)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VV4');
   
+var S1_GRD_VH1 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+// .filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
+.select('VH')
+.filterDate(globOptions.startDate1, globOptions.endDate1)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VH1');
+
+var S1_GRD_VH2 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VH')
+.filterDate(globOptions.startDate2, globOptions.endDate2)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VH2');
+
+var S1_GRD_VH3 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VH')
+.filterDate(globOptions.startDate3, globOptions.endDate3)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VH3');
+
+var S1_GRD_VH4 = ee.ImageCollection("COPERNICUS/S1_GRD")
+.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+.filter(ee.Filter.eq('instrumentMode', 'IW'))
+.select('VH')
+.filterDate(globOptions.startDate4, globOptions.endDate4)
+.filterBounds(geometry)
+.map(function(image) {
+  var edge = image.lt(-30.0);
+  var maskedImage = image.mask().and(edge.not());
+  return image.updateMask(maskedImage);
+})
+// .map(landsatFunctions.applySDWI)
+// .reduce(reducer, globOptions.parallelScale)
+.aside(print,'S1_GRD_VH4');
+
+//----------------------segmentation-----------------------------------------
+
+var VV1 = ee.Image(S1_GRD_VV1.median()).clip(geometry);
+var VV2 = ee.Image(S1_GRD_VV2.median()).clip(geometry);
+var VV3 = ee.Image(S1_GRD_VV3.median()).clip(geometry);
+var VV4 = ee.Image(S1_GRD_VV4.median()).clip(geometry);
+var VH1 = ee.Image(S1_GRD_VH1.median()).clip(geometry);
+var VH2 = ee.Image(S1_GRD_VH2.median()).clip(geometry);
+var VH3 = ee.Image(S1_GRD_VH3.median()).clip(geometry);
+var VH4 = ee.Image(S1_GRD_VH4.median()).clip(geometry);
+
+
+var img_seg = VV1.addBands(VV2).addBands(VV3).addBands(VV4)
+        .addBands(VV1).addBands(VV2).addBands(VV3).addBands(VV4).aside(print,'RGBVH+RGBVV')
+
+var seeds = ee.Algorithms.Image.Segmentation.seedGrid(20).aside(print,'seeds');
+
+var snic_pred = ee.Algorithms.Image.Segmentation.SNIC({
+  image: img_seg, 
+  compactness: 4,
+  connectivity: 8,
+  neighborhoodSize: 128,
+  size: 10,
+  seeds: seeds
+}).aside(print,'SNIC')
+    
+var clusters_snic_pred = snic_pred.select("clusters")
+
+
+var vectors_pred = clusters_snic_pred.reduceToVectors({
+  geometryType: 'polygon',
+  reducer: ee.Reducer.countEvery(),
+  scale: 20,
+  maxPixels: 1e13,
+  geometry: geometry,
+}); 
+
+// var empty_pred = ee.Image().byte().aside(print,'byte');
+
+// var outline_pred = empty_pred.paint({
+//   featureCollection: vectors_pred,
+//   color: 1,
+//   width: 1
+// }).aside(print,'paint');
+
+// Map.addLayer(outline_pred, {palette: 'FF0000'}, 'vec_snic_pred');
+
+
+//---------------- Classification ----------------------------
+
+var FullImage = img_seg.toFloat().aside(print,'toFloat') ;
+
+var train_points = randomPointsPreComputed.aside(print,'pretrainedpoints');
+
+var train_polys = vectors_pred
+.map(function(feat){
+  feat = ee.Feature(feat);
+  var point = feat.geometry();
+//whether intersects
+  var mappedPolys = train_points.map(function(poly){
+    var cls = poly.get("Class")
+    var intersects = poly.intersects(point, ee.ErrorMargin(1));
+    var property = ee.String(ee.Algorithms.If(intersects, 'TRUE', 'FALSE'));
+    return feat.set('belongsTo',  property).set('Class', cls);
+  });
+  return mappedPolys;
+})
+.flatten()
+.filter(ee.Filter.neq('belongsTo', 'FALSE')).aside(print,'belongsToFALSEintersects');
+
+
+
+var train_areas = train_polys //FeatureCollection (162 elements
+  .reduceToImage({
+    properties: ['Class'],
+    reducer: ee.Reducer.first()
+}).aside(print,'reduceToImage') //"first", double, EPSG:4326 Image (1 band)
+
+// bands: List (1 element)
+// 0: "first", double, EPSG:4326
+
+.rename('Class').toInt().aside(print,'reduceToImagetoInt'); //"Class", signed int32, EPSG:4326 Image (1 band)
+
+// bands: List (1 element)
+// 0: "Class", signed int32, EPSG:4326
+
+
+var vis_RF = {min: 0, max: 1,
+palette: [ 'yellow' //0
+,'green']//1
+}
+
+Map.addLayer(train_areas,vis_RF,"clip_img");
+
+
+var predict_image = vectors_pred
+  .reduceToImage({
+    properties: ['label'],
+    reducer: ee.Reducer.first()
+}).rename('id').toInt();
+
+
+
+FullImage = FullImage.addBands(predict_image).aside(print,'FullImage')//Image (7 bands)"id", signed int32, EPSG:4326
+
+var FullImage_mean = FullImage.reduceConnectedComponents({
+  reducer: ee.Reducer.mean(),
+  labelBand: 'id'
+});
+
+var FullImage_max = FullImage.reduceConnectedComponents({
+  reducer: ee.Reducer.max(),
+  labelBand: 'id'
+});
+
+var FullImage_min = FullImage.reduceConnectedComponents({
+  reducer: ee.Reducer.min(),
+  labelBand: 'id'
+});
+
+var FullImage_std = FullImage.reduceConnectedComponents({
+  reducer: ee.Reducer.stdDev(),
+  labelBand: 'id'
+});
+
+var FullImage_median = FullImage.reduceConnectedComponents({
+  reducer: ee.Reducer.median(),
+  labelBand: 'id'
+});
+
+var Pred_bands = ee.Image.cat([
+  FullImage_mean,
+  FullImage_max,
+  FullImage_std,
+  FullImage_median,
+  FullImage_min
+]).float();
+
+var predictionBands = Pred_bands.bandNames();
+
+var training = Pred_bands.sample(train_points, 20).aside(print,'sample'); //FeatureCollection (159 elements, 34 columns)
+
+
+
+
+
+var withRandom = training.randomColumn('random').aside(print,'randomColumn'); //FeatureCollection (159 elements, 35 columns)、
+
+
+
+
+var split = 0.7;  // Roughly 70% training, 30% testing.
+var trainingPartition = withRandom.filter(ee.Filter.lt('random', split));
+var testingPartition = withRandom.filter(ee.Filter.gte('random', split));
+
+
+
+var trainedClassifier = ee.Classifier.smileRandomForest({numberOfTrees:100}).train({
+  features: trainingPartition,
+  classProperty: 'Class',
+  inputProperties: predictionBands
+}).aside(print,'smileRandomForest'); //Classifier.train
+
+var test = testingPartition.classify(trainedClassifier).aside(print,'classifytestingPartition'); //FeatureCollection (40 elements, 0 columns)
+
+
+var classified_RF = Pred_bands.select(predictionBands).classify(trainedClassifier).aside(print,'classifyPred_bands'); //Image (1 band)  "classification", signed int32
+
+var vis_RF = {min: 0, max: 1,
+palette: [ 'yellow' //0
+,'green']//1
+}
+
+Map.addLayer(classified_RF, vis_RF, 'Classified');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
  var S2_SR = ee.ImageCollection('COPERNICUS/S2_SR')
-  .filterDate(globOptions.startDate, globOptions.endDate)
+  .filterDate(globOptions.startDate0, globOptions.endDate0)
   .filterBounds(geometry)
   .filterMetadata('CLOUDY_PIXEL_PERCENTAGE', 'less_than', 20)
-  .map(landsatFunctions.applyFMask)
+  // .map(landsatFunctions.applyFMask)
   .select(globOptions.bands2sr_TCI, globOptions.bandSelect)
-  .sort('DATE_ACQUIRED',true).aside(print);
+  // .sort('DATE_ACQUIRED',true)
+  .aside(print,'S2_SR');
   
 var S2_SR1 = S2_SR.map(landsatFunctions.applyNDWI)
 .reduce(reducer, globOptions.parallelScale)
@@ -193,24 +518,24 @@ Map.addLayer(S2_SR1.select('ndwi_min'));  //NICE!
 //                 }, 'ASTER temperature')
 
 //STEP3:classify
-var trainComposite = S2_SR1
-      .addBands(S2_SR2)
-      .addBands(S2_SR3)
-      .addBands(S1_GRD)
-      .addBands(ASTER_1)
-      .addBands(ASTER_2)
-      .addBands(ASTER_3).randomColumn('random', 2015).aside(print); 
-var bands = trainComposite.bandNames();
+// var trainComposite = S2_SR1
+//       .addBands(S2_SR2)
+//       .addBands(S2_SR3)
+//       .addBands(S1_GRD)
+//       .addBands(ASTER_1)
+//       .addBands(ASTER_2)
+//       .addBands(ASTER_3).randomColumn('random', 2015).aside(print); 
+// var bands = trainComposite.bandNames();
 
 
 // var train = trainComposite.randomColumn('random', 2015); //seed = 2015
 
-var trainingSet = trainComposite.filter(ee.Filter.gte('random',globOptions.trainingValidationRatio)).aside(print);
-var validationSet = trainComposite.filter(ee.Filter.lt('random',globOptions.trainingValidationRatio)).aside(print);
+// var trainingSet = trainComposite.filter(ee.Filter.gte('random',globOptions.trainingValidationRatio)).aside(print);
+// var validationSet = trainComposite.filter(ee.Filter.lt('random',globOptions.trainingValidationRatio)).aside(print);
 
 
 //4. Training Data
-var predictorSet = randomPointsPreComputed.aside(print);
+// var predictorSet = randomPointsPreComputed.aside(print);
 
 // 5. Classify 
 
@@ -219,18 +544,18 @@ var predictorSet = randomPointsPreComputed.aside(print);
 //   inputProperties: bands
 // });
 
-var classifier = ee.Classifier.smileRandomForest(globOptions.nTrees)
-  .train({
-    features: trainingSet,
-    classProperty: 'CLASS',
-    inputProperties: bands
-  })
-  .setOutputMode('CLASSIFICATION').aside(print);
+// var classifier = ee.Classifier.smileRandomForest(globOptions.nTrees)
+//   .train({
+//     features: trainingSet,
+//     classProperty: 'CLASS',
+//     inputProperties: bands
+//   })
+//   .setOutputMode('CLASSIFICATION').aside(print);
   
-var classified = trainComposite.select(bands)
-  .classify(classifier).aside(print);
+// var classified = trainComposite.select(bands)
+//   .classify(classifier).aside(print);
   
-// 海岸区域界定
-var  finalMask =  ee.Image('UQ/murray/Intertidal/v1_1/data_mask');
-var finalOut = classified.byte()
-  .mask(finalMask).aside(print); 
+// // 海岸区域界定
+// var  finalMask =  ee.Image('UQ/murray/Intertidal/v1_1/data_mask');
+// var finalOut = classified.byte()
+//   .mask(finalMask).aside(print); 

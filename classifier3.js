@@ -991,6 +991,21 @@ var No_crop =
               "Class": 1,
               "system:index": "75"
             })]).aside(print,'crop');
+           
+// FeatureCollection (76 elements, 2 columns)
+// type: FeatureCollection
+// columns: Object (2 properties)
+// Class: Integer
+// system:index: String
+// features: List (76 elements)
+// 0: Feature 0 (Point, 1 property)
+// type: Feature
+// id: 0
+// geometry: Point (72.12, 34.18)
+// type: Point
+// coordinates: [72.11786491700781,34.17542765828385]
+// properties: Object (1 property)
+// Class: 1
 
 
 
@@ -1093,7 +1108,29 @@ Map.addLayer(RGBVH, {min: -25, max: 5}, 'RGB VH');
 
 var img_seg = RGBVH.addBands(RGBVV).aside(print,'RGBVH+RGBVV')
 
+
+// Image (6 bands)
+// type: Image
+// bands: List (6 elements)
+// 0: "VH", double, EPSG:4326, 1x1 px
+// 1: "VH_1", double, EPSG:4326, 1x1 px
+// 2: "VH_2", double, EPSG:4326, 1x1 px
+// 3: "VV", double, EPSG:4326, 1x1 px
+// 4: "VV_1", double, EPSG:4326, 1x1 px
+// 5: "VV_2", double, EPSG:4326, 1x1 px
+// properties: Object (1 property)
+// system:footprint: Polygon, 5 vertices
+
 var seeds = ee.Algorithms.Image.Segmentation.seedGrid(20).aside(print,'seeds');
+
+// Image (1 band)
+// type: Image
+// bands: List (1 element)
+// 0: "seeds", int ∈ [0, 1], EPSG:4326
+// id: seeds
+// crs: EPSG:4326
+// crs_transform: [1,0,0,0,1,0]
+// data_type: int ∈ [0, 1]
 
 var snic_pred = ee.Algorithms.Image.Segmentation.SNIC({
   image: img_seg, 
@@ -1103,6 +1140,24 @@ var snic_pred = ee.Algorithms.Image.Segmentation.SNIC({
   size: 10,
   seeds: seeds
 }).aside(print,'SNIC')
+
+
+// Image (7 bands)
+// type: Image
+// bands: List (7 elements)
+// 0: "clusters", signed int32, EPSG:4326, 1x1 px
+// 1: "VH_mean", float, EPSG:4326, 1x1 px
+// 2: "VH_1_mean", float, EPSG:4326, 1x1 px
+// 3: "VH_2_mean", float, EPSG:4326, 1x1 px
+// 4: "VV_mean", float, EPSG:4326, 1x1 px
+// 5: "VV_1_mean", float, EPSG:4326, 1x1 px
+// 6: "VV_2_mean", float, EPSG:4326, 1x1 px
+// properties: Object (1 property)
+// system:footprint: Polygon, 5 vertices
+// type: Polygon
+// coordinates: List (1 element)
+// 0: List (5 elements)
+// geodesic: false
 
 
 var clusters_snic_pred = snic_pred.select("clusters")
@@ -1117,13 +1172,51 @@ var vectors_pred = clusters_snic_pred.reduceToVectors({
 }).aside(print,'reduceToVectors'); // FeatureCollection (422 elements, 3 columns)
 
 
+// columns: Object (3 properties)
+// count: Long<0, 4294967295>
+// label: Integer
+// system:index: String
+// features: List (422 elements)
+// 0: Feature +401214+190140 (Polygon, 2 properties)
+// type: Feature
+// id: +401214+190140
+// geometry: Polygon, 88 vertices
+// type: Polygon
+// coordinates: List (2 elements)
+// 0: List (83 elements)
+// 1: List (5 elements)
+// geodesic: false
+// properties: Object (2 properties)
+// count: 331
+// label: -447560355
+
+
 var empty_pred = ee.Image().byte().aside(print,'byte');
+
+// Image (1 band)
+// type: Image
+// bands: List (1 element)
+// 0: "constant", unsigned int8, EPSG:4326
+// id: constant
+// crs: EPSG:4326
+// crs_transform: [1,0,0,0,1,0]
+// data_type: unsigned int8
 
 var outline_pred = empty_pred.paint({
   featureCollection: vectors_pred,
   color: 1,
   width: 1
 }).aside(print,'paint');
+
+// Image (1 band)
+// type: Image
+// bands: List (1 element)
+// 0: "constant", unsigned int8, EPSG:4326
+// id: constant
+// crs: EPSG:4326
+// crs_transform: [1,0,0,0,1,0]
+// data_type: unsigned int8
+
 Map.addLayer(outline_pred, {palette: 'FF0000'}, 'vec_snic_pred');
 
 
@@ -1131,9 +1224,56 @@ Map.addLayer(outline_pred, {palette: 'FF0000'}, 'vec_snic_pred');
 
 var FullImage = RGBVH.addBands(RGBVV).toFloat().aside(print,'toFloat') //Image (6 bands)
 
+// bands: List (6 elements)
+// 0: "VH", float, EPSG:4326, 1x1 px
+// 1: "VH_1", float, EPSG:4326, 1x1 px
+// 2: "VH_2", float, EPSG:4326, 1x1 px
+// 3: "VV", float, EPSG:4326, 1x1 px
+// 4: "VV_1", float, EPSG:4326, 1x1 px
+// 5: "VV_2", float, EPSG:4326, 1x1 px
+// properties: Object (1 property)
+// system:footprint: Polygon, 5 vertices
+// type: Polygon
+// coordinates: List (1 element)
+// 0: List (5 elements)
+// geodesic: false
+
 var train_points = No_crop.merge(Crop_fields).aside(print,'pretrainedpoints') //FeatureCollection (162 elements, 2 columns)
 
+// columns: Object (2 properties)
+// Class: Integer
+// system:index: String
+// features: List (162 elements)
+// 0: Feature 1_0 (Point, 1 property)
+// type: Feature
+// id: 1_0
+// geometry: Point (72.12, 34.15)
+// type: Point
+// coordinates: [72.12326247571131,34.15080992471748]
+// properties: Object (1 property)
+// Class: 0
+
+
 var train_polys = vectors_pred.aside(print,'vectors_pred') //分割FeatureCollection (422 elements, 3 columns)
+
+// columns: Object (3 properties)
+// count: Long<0, 4294967295>
+// label: Integer
+// system:index: String
+// features: List (422 elements)
+// 0: Feature +401214+190140 (Polygon, 2 properties)
+// type: Feature
+// id: +401214+190140
+// geometry: Polygon, 88 vertices
+// type: Polygon
+// coordinates: List (2 elements)
+// 0: List (83 elements)
+// 1: List (5 elements)
+// geodesic: false
+// properties: Object (2 properties)
+// count: 331
+// label: -447560355
+
   .map(function(feat){
   feat = ee.Feature(feat);
   var point = feat.geometry();
@@ -1146,8 +1286,39 @@ var train_polys = vectors_pred.aside(print,'vectors_pred') //分割FeatureCollec
   });
   return mappedPolys;
 }).aside(print,'map') //FeatureCollection (422 elements, 0 columns)
+
+// columns: Object (5 properties)
+// Class: Integer
+// belongsTo: String
+// count: Long
+// label: Long
+// system:index: String
+
 .flatten().aside(print,'flatten')
-.filter(ee.Filter.neq('belongsTo', 'FALSE')).aside(print,'belongsToFALSEintersects');//FeatureCollection (162 elements, 0 columns)none intersect remained
+.filter(ee.Filter.neq('belongsTo', 'FALSE')).aside(print,'belongsToFALSEintersects');
+//FeatureCollection (162 elements, 0 columns)none intersect remained
+
+// 0: Feature +401350+190107_1_6 (Polygon, 4 properties)
+// type: Feature
+// id: +401350+190107_1_6
+// geometry: Polygon, 269 vertices
+  // type: Polygon
+  // coordinates: List (7 elements)
+    // 0: List (233 elements)
+    // 1: List (7 elements)
+    // 2: List (5 elements)
+    // 3: List (9 elements)
+    // 4: List (5 elements)
+    // 5: List (5 elements)
+    // 6: List (5 elements)
+    
+  // geodesic: false
+
+// properties: Object (4 properties)
+  // Class: 0
+  // belongsTo: TRUE
+  // count: 1370
+  // label: -1307019721
 
 
 
@@ -1157,7 +1328,14 @@ var train_areas = train_polys //FeatureCollection (162 elements
     properties: ['Class'],
     reducer: ee.Reducer.first()
 }).aside(print,'reduceToImage') //"first", double, EPSG:4326 Image (1 band)
+
+// bands: List (1 element)
+// 0: "first", double, EPSG:4326
+
 .rename('Class').toInt().aside(print,'reduceToImagetoInt'); //"Class", signed int32, EPSG:4326 Image (1 band)
+
+// bands: List (1 element)
+// 0: "Class", signed int32, EPSG:4326
 
 
 var vis_RF = {min: 0, max: 1,
@@ -1176,6 +1354,16 @@ var predict_image = vectors_pred
 
 
 FullImage = FullImage.addBands(predict_image).aside(print,'FullImage')//Image (7 bands)"id", signed int32, EPSG:4326
+
+// bands: List (7 elements)
+// 0: "VH", float, EPSG:4326, 1x1 px
+// 1: "VH_1", float, EPSG:4326, 1x1 px
+// 2: "VH_2", float, EPSG:4326, 1x1 px
+// 3: "VV", float, EPSG:4326, 1x1 px
+// 4: "VV_1", float, EPSG:4326, 1x1 px
+// 5: "VV_2", float, EPSG:4326, 1x1 px
+// 6: "id", signed int32, EPSG:4326
+
 //对每个“对象”中的所有像素应用减速器。
 //如果像素是连接的(8-way)，并且在“label”带中具有相同的值，则认为它们属于一个对象。
 //标签带仅用于识别连接性;其余的作为减速器的投入提供。
@@ -1234,14 +1422,51 @@ var predictionBands = Pred_bands.bandNames();
 
 Pred_bands = Pred_bands.addBands(train_areas)
 
-var training = Pred_bands.sample(train_points, 20);
-
-
-print(training)
+var training = Pred_bands.sample(train_points, 20).aside(print,'sample'); //FeatureCollection (159 elements, 34 columns)
 
 
 
-var withRandom = training.randomColumn('random');
+
+
+var withRandom = training.randomColumn('random').aside(print,'randomColumn'); //FeatureCollection (159 elements, 35 columns)
+
+// columns: Object (35 properties)
+// Class: Integer
+// VH: Float
+// VH_1: Float
+// VH_1_1: Float
+// VH_1_2: Float
+// VH_1_3: Float
+// VH_1_4: Float
+// VH_2: Float
+// VH_2_1: Float
+// VH_2_2: Float
+// VH_2_3: Float
+// VH_2_4: Float
+// VH_3: Float
+// VH_4: Float
+// VH_5: Float
+// VH_6: Float
+// VV: Float
+// VV_1: Float
+// VV_1_1: Float
+// VV_1_2: Float
+// VV_1_3: Float
+// VV_1_4: Float
+// VV_2: Float
+// VV_2_1: Float
+// VV_2_2: Float
+// VV_2_3: Float
+// VV_2_4: Float
+// VV_3: Float
+// VV_4: Float
+// VV_5: Float
+// VV_6: Float
+// area: Float
+// height: Float
+// random: <any>
+// width: Float
+
 var split = 0.7;  // Roughly 70% training, 30% testing.
 var trainingPartition = withRandom.filter(ee.Filter.lt('random', split));
 var testingPartition = withRandom.filter(ee.Filter.gte('random', split));
@@ -1252,21 +1477,59 @@ var trainedClassifier = ee.Classifier.smileRandomForest({numberOfTrees:100}).tra
   features: trainingPartition,
   classProperty: 'Class',
   inputProperties: predictionBands
-});
+}).aside(print,'smileRandomForest'); //Classifier.train
 
 // Classify the test FeatureCollection.
-var test = testingPartition.classify(trainedClassifier);
+var test = testingPartition.classify(trainedClassifier).aside(print,'classifytestingPartition'); //FeatureCollection (40 elements, 0 columns)
 
-var classified_RF = Pred_bands.select(predictionBands).classify(trainedClassifier);
+// properties: Object (36 properties)
+// Class: 1
+// VH: -17.987802505493164
+// VH_1: -20.446969985961914
+// VH_1_1: -11.336684226989746
+// VH_1_2: 3.3291358947753906
+// VH_1_3: -20.062349319458008
+// VH_1_4: -33.47245788574219
+// VH_2: -17.077720642089844
+// VH_2_1: -9.73388671875
+// VH_2_2: 2.562696933746338
+// VH_2_3: -16.998180389404297
+// VH_2_4: -29.42670440673828
+// VH_3: -12.933541297912598
+// VH_4: 1.8077919483184814
+// VH_5: -17.833660125732422
+// VH_6: -26.73664093017578
+// VV: -11.59115219116211
+// VV_1: -11.277421951293945
+// VV_1_1: -4.749847412109375
+// VV_1_2: 2.2022743225097656
+// VV_1_3: -11.439092636108398
+// VV_1_4: -17.398120880126953
+// VV_2: -9.193023681640625
+// VV_2_1: -4.1558308601379395
+// VV_2_2: 1.736317753791809
+// VV_2_3: -9.131431579589844
+// VV_2_4: -16.674373626708984
+// VV_3: -6.673230171203613
+// VV_4: 1.861851453781128
+// VV_5: -11.662367820739746
+// VV_6: -16.886898040771484
+// area: 163784.625
+// classification: 1
+// height: 0.00413225032389164
+// random: 0.937686345029616
+// width: 0.005030565429478884
+
+var classified_RF = Pred_bands.select(predictionBands).classify(trainedClassifier).aside(print,'classifyPred_bands'); //Image (1 band)  "classification", signed int32
 
 Map.addLayer(classified_RF, vis_RF, 'Classified');
 
 
 // Print the confusion matrix.
-var confusionMatrix = test.errorMatrix('Class', 'classification');
+var confusionMatrix = test.errorMatrix('Class', 'classification').aside(print,'errorMatrix');
 
-print('Confusion Matrix', confusionMatrix);
-print('Validation overall accuracy: ', confusionMatrix.accuracy());
+print('Confusion Matrix', confusionMatrix); //[[23,2],[0,15]]
+print('Validation overall accuracy: ', confusionMatrix.accuracy()); //0.95
 
 
 var ag_mask = classified_RF.eq(1)
@@ -1283,8 +1546,7 @@ var ag_vec = ag_mask.reduceToVectors({
 
 Map.addLayer(ag_vec,{color:'green'},'Vec_agric')
 
-print('Area em Ha: ',ag_vec.geometry().area(1).divide(100 * 100))
-
+print('Area em Ha: ',ag_vec.geometry().area(1).divide(100 * 100)) //2381.7499395289565
 
 
 

@@ -1,26 +1,30 @@
-# 1. 本项目 GeoClassifier 采用的算法
+# 1. 本项目 GeoClassifier 采用的算法 🌲🌲
 
-SVM, Cart, Random Forest, Naive Bayes Classifier 
+遥感影像的分类算法一般为 SVM, Cart, Random Forest, Naive Bayes Classifier，本文采用 Random Forest 进行监督分类
 
-最终采用的代码是 TidalFlat.js 
+最终采用的代码是 [TidalFlat.js](https://github.com/YutingYao/GeoClassifier/blob/main/TidalFlat.js)
 
-# 2. 研究背景
+研究的技术路线如图所示，主要包括算法初始化、用海岸区域训练随机森林分类器和计算光滩3个部分。
+
+[![Snipaste-2022-07-13-15-21-01.png](https://i.postimg.cc/TwPcprrg/Snipaste-2022-07-13-15-21-01.png)](https://postimg.cc/CZW82nrx)
+
+# 2. 研究背景 📌📌
 
 全球土地分类的研究依赖于计算系统的数据处理能力，因此大多数研究的分类精读较低。Hansen等 (2000)、Bartholome等(2005)、Gong等(2013)利用遥感数据集制作了几张全球范围的土地覆盖地图，这些地图极大地促进了世界各地的土地利用和土地覆盖监测。Murray等(2019)的算法提取的结果计算偏大，将大量人工建筑区域都划分为潮滩区域，因此本章节容纳了Sentinel-1和 Sentinel-2的数据，计算结果分辨率达到10米级别，在这样的分辨率下可以精确描绘出潮沟的形状。在全球气候变化和海洋富营养化背景下，基于本算法提取出的潮滩区域可进一步与地球系统模型耦合，从而更准确地评估全球气候变化等问题。
 
-# 3. 具体算法
+# 3. 具体算法 📐📐
 
 遥感影像分类算法有监督分类和非监督分类2种，在监督分类通常采用分类回归树(Classification and regression tree，简称CART)、随机森林(Random forest)、支持向量机(Support vector machines，简称SVM）和朴素贝叶斯(Naive bayes)。
 
-# 4. 海岸线矢量数据（见 SimplifiedCoastlineShape）
+# 4. 海岸线矢量数据（见 [SimplifiedCoastlineShape](https://github.com/YutingYao/GeoClassifier/tree/main/SimplifiedCoastlineShape)）
 
 刘闯等(2019)研发了基于Google Earth遥感影像全球海陆（岛）岸线数据集，该数据集是通过河口地形和地貌特点来判别的海洋潮汐能够起到主要影响作用的上限。本章的算法是基于刘闯等(2019)研发的数据集，由于该数据集的结点过多不便于大规模计算，所以采用QGIS的简化算法处理过多结点，只保留海岸线的大致轮。简化后的海岸线轮廓数据集可以通过Github链接下载，包含亚洲(AS)、欧洲(EU)、非洲(AF)、北美洲(NA)、南美洲(SA)、大洋洲(OA)这六个大洲的大陆岸线(C)和岛屿岸线(I)，不包含南极洲。
 
-# 5. 卫星遥感格栅数据
+# 5. 卫星遥感格栅数据 🚀🚀
 
 本文采用的数据集包括Sentinel-1的全天候雷达影像、Sentinel-2的高分辨率光学影像和SRTM高程数据集，如表6.2.1所示。而Landsat光学影像和ETOPO1高程数据集的分辨率太低，无法描绘出潮沟的形状，所以不被采用。本章的计算结果分辨率达到10米级别，在这样的分辨率下，可以描绘出潮沟的形状。
 
-# 6. 计算步骤
+# 6. 计算步骤 🍒🍒
 
 基于Sentinel-1的SDWI值和基于Sentinel-2的NDWI和NDVI值都可以用于区分水体与非水体，从而获得所有遥感影像的海陆分界线。
 
@@ -34,7 +38,7 @@ SVM, Cart, Random Forest, Naive Bayes Classifier
 
 第三步，用亚洲海岸区域训练的随机森林分类器推广到全球，导入全球的Sentinel-1的全天候雷达影像、Sentinel-2的高分辨率光学影像。与第二步类似，提取Sentinel遥感影像的特征集合，可视化分类结果，并计算全球光滩面积。
 
-# 其他：关于 3D GIS 可以参考
+# 其他有趣的项目 forked from OTHERS 😎：关于 3D GIS 可以参考
 
 [maptalks.js](https://github.com/YutingYao/maptalks.js)
 
